@@ -35,53 +35,59 @@ if ($methode == 'OPTIONS') {
     exit;
 }
 
-// L'authentification veut QUE la méthode POST
-if ($methode != 'POST') {
-    deliver_response(405, "Méthode non autorisée. Il faut utiliser POST.");
+// --- On utilise get_bearer_token() et is_jwt_valid() pour vérifier le jeton ---
+$jwt = get_bearer_token();
+if (!$jwt || !is_jwt_valid($jwt, 'random')) {
+    deliver_response(401, "Authentification requise pour gérer les joueurs.");
     exit;
 }
 
-// Lecture et décodage des données JSON reçues
-$donnees_brutes = file_get_contents('php://input');
-$data = json_decode($donnees_brutes, true);
 
 
-/* On vérifie que l'identifiant et le password sont bien présents dans le JSON reçu
-if (!isset($data['identifiant']) || !isset($data['password'])) {
-    deliver_response(400, "Erreur : Identifiant ou mot de passe manquant.");
-    exit;
+// --- Parser ce que l'application veut en fonction de sa méthode ---
+switch($methode) {
+    case 'GET':
+        /* Si y'a un ID, alors on envoit le joueur/match à l'id
+           Sinon -> recuperer_tous_les_joueurs()*/
+        
+        
+        break;
+        
+    case 'POST': // On souhaite créer un joueur/match
+        // On lit les données du json
+        $data = json_decode(file_get_contents('php://input'), true);
+        // Appel au DAO pour insertion
+        
+        
+        
+        
+        
+        break;
+
+    case 'PUT': // On souhaite modifier un joueur/match
+        // On lit les données du json
+        $data = json_decode(file_get_contents('php://input'), true);
+        // Appel au DAO pour modification
+        
+        
+        
+        
+        
+        
+        break;
+
+    case 'DELETE': // On souhaite supprimer un joueur/match
+        // On lit les données du json
+        $data = json_decode(file_get_contents('php://input'), true);
+        // Appel au DAO pour suppression
+        
+        
+        
+        
+        break;
+
+    default:
+        deliver_response(405, "Méthode non autorisée");
+        break;
 }
-
-$id_saisi = $data['identifiant'];
-$mdp_saisi = $data['password'];
-*/
-// Connexion à la base de données avec le getInstance
-$pdo = Database::getInstance();
-
-
-/* Recherche de l'entraîneur par son identifiant
-$query = $pdo->prepare("SELECT * FROM Entraineur WHERE identifiant = :id");
-$query->execute([':id' => $id_saisi]);
-
-$user = $query->fetch(PDO::FETCH_ASSOC);
-
-// On vérifie que user existe et on compare le mdp en déhashant
-if ($user && password_verify($mdp_saisi, $user['mdp'])) {
-    $headers = array('algo' => 'HS256', 'type' => 'JWT');
-
-    $payload = array(
-        'id_entraineur' => $user['Id_Entraineur'],
-        'identifiant' => $user['identifiant'],
-        'nom' => $user['nom'],
-        'prenom' => $user['prenom'],
-        'exp' => time() + 600             // Expire dans 10min                  -------------------------------------
-    );
-
-    $signature = 'random'; // La clé secrète                                    -------------------------------------
-    $jwt = generate_jwt($headers, $payload, $signature);
-    deliver_response(200, "Authentification réussie", $jwt);
-
-} else { // Si login inexistant ou mdp incorrect
-    deliver_response(401, "Login ou mot de passe incorrect.");
-}*/
 ?>
