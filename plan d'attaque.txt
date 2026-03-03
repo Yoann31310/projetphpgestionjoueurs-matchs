@@ -1,0 +1,47 @@
+Dans le repo il y aura plusieurs api en réalité
+Projet php gère les joueurs, les matchs, les feuilles de matchs et les stats. 
+
+Donc il y aura une api pour les joueurs, une api pour les matchs, une api pour les feuilles de matchs et une api pour les stats, c'est juste qu'elle seront toutes dans le même repo 
+
+Donc tout les modèles et dao seront transférés
+
+Pour les joueurs : 
+- Lister() : get
+- ...
+- supprimer() : delete
+
+Tout ça sera dans l'api de joueur
+Et on retrouvera la même chose dans l'api de match, l'api de feuille de match et l'api de stats, pour leurs opérations respectives
+
+# Fonctions exactes : 
+Joueurs
+| Lister        | JoueurDAO::recuperer_actifs()                 | GET |
+| Détails       | JoueurDAO::trouver_par_id($id)                | GET + id |
+| Ajouter       | JoueurDAO::ajouter(Joueur $joueur)            | POST |
+| Modifier      | JoueurDAO::modifier($id, Joueur $joueur)      | PUT + id |
+| Supprimer     | JoueurDAO::supprimer($id)                     | DELETE + id |
+
+Matchs
+| Lister        | MatchDAO::recuperer_tout()                    | GET |
+| Détails       | MatchDAO::trouver_par_id($id)                 | GET + id |
+| Ajouter       | MatchDAO::ajouter(Matchs $match)              | POST |
+| Modifier      | MatchDAO::modifier($id, Matchs $match)        | PUT + id |
+| Supprimer     | MatchDAO::supprimer($id)                      | DELETE + id |
+
+
+Feuilles de matchs
+| Lister        | ParticipationDAO::recuperer_participants($id_match)                                   | GET + id_match |
+| Ajouter       | ParticipationDAO::ajouter_participant($id_match, $id_joueur, $role, $poste)           | POST |
+| Vider         | ParticipationDAO::vider_feuille($id_match)                                            | DELETE + id_match |
+| Evaluer       | ParticipationDAO::evaluer_joueur($id_match, $id_joueur, $note, $commentaire)          | PUT + id_match/id_joueur |
+
+
+Stats (On fait que des GET pour les stats, donc on va ajouter un paramètre avec pour différencier les demandes de l'appli)
+| Globales           | MatchDAO::obtenir_stats_globales()                                 | GET + ?type=globales |
+| Série              | MatchDAO::obtenir_serie_en_cours()                                 | GET + ?type=serie |
+| Top Participations | ParticipationDAO::obtenir_top_participations()                     | GET + ?type=top |
+| Stats Joueurs      | ParticipationDAO::obtenir_stats_joueurs()                          | GET + ?type=joueurs |
+
+
+PS : Il faudra donc que chaque api fasse une vérif que l'entraineur est connecté. Donc dcp on va essayer de faire un php pour refactorer.
+--> Ce qu'il y a actuellement dans apiGestion.php (sans le switch) sera une version a refactorer pour que toutes les api puissent l'utiliser (vu qu'elles font la même chose)
