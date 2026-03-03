@@ -1,6 +1,6 @@
 <?php
 // Imports des fichiers nécessaires
-require_once 'connexionDB.php';
+require_once 'Modeles/connexionDB.php';
 require_once 'jwt_utils.php';
 
 // Envoyer une réponse JSON au client
@@ -42,52 +42,7 @@ if (!$jwt || !is_jwt_valid($jwt, 'random')) {
     exit;
 }
 
-
-
-// --- Parser ce que l'application veut en fonction de sa méthode ---
-switch($methode) {
-    case 'GET':
-        /* Si y'a un ID, alors on envoit le joueur/match à l'id
-           Sinon -> recuperer_tous_les_joueurs()*/
-        
-        
-        break;
-        
-    case 'POST': // On souhaite créer un joueur/match
-        // On lit les données du json
-        $data = json_decode(file_get_contents('php://input'), true);
-        // Appel au DAO pour insertion
-        
-        
-        
-        
-        
-        break;
-
-    case 'PUT': // On souhaite modifier un joueur/match
-        // On lit les données du json
-        $data = json_decode(file_get_contents('php://input'), true);
-        // Appel au DAO pour modification
-        
-        
-        
-        
-        
-        
-        break;
-
-    case 'DELETE': // On souhaite supprimer un joueur/match
-        // On lit les données du json
-        $data = json_decode(file_get_contents('php://input'), true);
-        // Appel au DAO pour suppression
-        
-        
-        
-        
-        break;
-
-    default:
-        deliver_response(405, "Méthode non autorisée");
-        break;
-}
+// --- Variables partagées pour toutes les APIs ---
+$methode = $_SERVER['REQUEST_METHOD'];                              // La méthode http
+$data = json_decode(file_get_contents('php://input'), true);        // Le json de la requête décodé
 ?>

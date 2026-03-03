@@ -45,3 +45,10 @@ Stats (On fait que des GET pour les stats, donc on va ajouter un paramètre avec
 
 PS : Il faudra donc que chaque api fasse une vérif que l'entraineur est connecté. Donc dcp on va essayer de faire un php pour refactorer.
 --> Ce qu'il y a actuellement dans apiGestion.php (sans le switch) sera une version a refactorer pour que toutes les api puissent l'utiliser (vu qu'elles font la même chose)
+
+
+
+état actuel du commit : 
+L'affichage des joueurs est fonctionnelle. Il reste à faire la modif/suppression/ajout d'un joueur
+Par contre, niveau code, il a fallu rendre toutes les méthodes et attributs en public
+TODO : Essayer de trouver un autre moyen pour améliorer ça. 

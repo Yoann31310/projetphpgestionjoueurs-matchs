@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../database.php';
+require_once __DIR__ . '/../connexionDB.php';
 require_once __DIR__ . '/../Classes/Participation.php';
 
 class ParticipationDAO {

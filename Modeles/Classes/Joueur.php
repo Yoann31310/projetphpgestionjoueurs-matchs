@@ -2,16 +2,17 @@
 require_once __DIR__ . '/../DAO/JoueurDAO.php';
 
 class Joueur {
-	private $id_joueurs;
-	private $numero_licence;
-	private $nom;
-	private $prenom;
-	private $date_naissance;
-	private $taille;
-	private $poids;
-	private $statut;
+	public $id_joueurs;
+	public $numero_licence;
+	public $nom;
+	public $prenom;
+	public $date_naissance;
+	public $taille;
+	public $poids;
+	public $statut;
+	
+	// --------- Getters ---------
 
-	// ========== GETTERS ==========
 	
 	public function get_id_joueurs() {  		    return $this->id_joueurs; }
 	public function get_numero_licence() {		    return $this->numero_licence; }
