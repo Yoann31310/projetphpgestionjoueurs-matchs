@@ -2,12 +2,12 @@
 require_once __DIR__ . '/../DAO/MatchDAO.php';
 
 class Matchs {
-	private $id_matchs;
-	private $date_heure;
-	private $nom_equipe_adverse;
-	private $lieu;
-	private $adresse;
-	private $resultat;
+	public $id_matchs;
+	public $date_heure;
+	public $nom_equipe_adverse;
+	public $lieu;
+	public $adresse;
+	public $resultat;
 
 	
 
