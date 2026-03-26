@@ -42,12 +42,10 @@ Le refactoring pour envoyer les réponses et pour décoder les jsons, et aussi v
 > Cette api a aussi des vérifications en BD, et vérifie également que la mise à jour d'un résultat de match n'est possible que si le match a eu lieu.
 
 ### API Feuilles de Match (`apiGestionFeuilleMatch.php`)
-Utilise les méthodes de `ParticipationDAO`
-
-- GET + id_match      : Lister les participants d'un match.                     recuperer_participants()
-- POST                : Ajouter un participant (id_j, role, poste).             ajouter_participant()
-- DELETE + id_match   : Vider la feuille de match.                              vider_feuille()
-- PUT                 : Évaluer un joueur (id_j, note, commentaire).            evaluer_joueur()
+- GET + id_match      : Lister les participants d'un match.                     ParticipationDAO::recuperer_participants()
+- POST                : Ajouter un participant (id_j, role, poste).             ParticipationDAO::ajouter_participant()
+- DELETE + id_match   : Vider la feuille de match.                              ParticipationDAO::vider_feuille()
+- PUT                 : Évaluer un joueur (id_j, note, commentaire).            ParticipationDAO::evaluer_joueur()
 
 > Les vérifications de cette api, conformément au projet :
 >     - Entre 5 et 7 titulaires requis. Maximum 7 remplaçants.
@@ -76,5 +74,3 @@ Regroupe tous les GET de statistiques pour le dashboard.
 ## Ce qu'il reste à faire / a améliorer dans ce repo 
 - Tout mettre dans un .env() même si bon... Techniquement c trop tard, car les données auront été en clair dans les commits précédents...
 - Faire une interface pour une documentation de chacunes de nos api 
-
-- Actuellement, au niveau de l'authentification, le jeton est vérifié localement. il faut qu'on enlève la signature de là où elle est, et que l'api de gestion fasse un appel elle même à l'api authentification pour vérifier que le jeton est correct. Interdit de vérifier en local.
