@@ -77,6 +77,17 @@ class ParticipationDAO {
 		}
 	}
 
+	// Retirer un joueur spécifique d'une feuille de match
+	public static function retirer_participant($id_match, $id_joueur) {
+		try {
+			$db = Database::getInstance();
+			$req = $db->prepare("DELETE FROM Participer WHERE Id_Matchs = :idM AND Id_Joueurs = :idJ");
+			return $req->execute(['idM' => $id_match, 'idJ' => $id_joueur]);
+		} catch (PDOException $e) {
+			die("Erreur lors du retrait du participant : " . $e->getMessage());
+		}
+	}
+
 	// Enregistrer l'évaluation d'un joueur après le match
 	public static function evaluer_joueur($id_match, $id_joueur, $note, $commentaire) {
 		try {
@@ -147,5 +158,32 @@ public static function obtenir_stats_joueurs() {
         ORDER BY nb_participations DESC, moyenne_evaluations DESC
     ";
     return $db->query($sql)->fetchAll();
+}
+
+// Nombre de sélections consécutives pour un joueur (en remontant le temps)
+public static function obtenir_selections_consecutives($id_joueur) {
+    try {
+        $db = Database::getInstance();
+        
+        // Tous les matchs terminés ordonnés par date décroissante
+        $sqlMatchs = "SELECT Id_Matchs FROM Matchs WHERE resultat IS NOT NULL ORDER BY Date_heure DESC";
+        $matchs = $db->query($sqlMatchs)->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (empty($matchs)) return 0;
+        
+        $consecutives = 0;
+        foreach ($matchs as $id_m) {
+            $req = $db->prepare("SELECT COUNT(*) FROM Participer WHERE Id_Matchs = :idM AND Id_Joueurs = :idJ");
+            $req->execute(['idM' => $id_m, 'idJ' => $id_joueur]);
+            if ($req->fetchColumn() > 0) {
+                $consecutives++;
+            } else {
+                break; // On s'arrête dès qu'il y a un trou
+            }
+        }
+        return $consecutives;
+    } catch (PDOException $e) {
+        die("Erreur sélections consécutives : " . $e->getMessage());
+    }
 }
 }

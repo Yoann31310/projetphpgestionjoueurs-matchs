@@ -52,6 +52,11 @@ class Participation {
         return ParticipationDAO::vider_feuille($id_match);
     }
 
+    // Retirer un participant
+    public static function retirer_participant($id_match, $id_joueur) {
+        return ParticipationDAO::retirer_participant($id_match, $id_joueur);
+    }
+
     // Évaluer un joueur
     public static function evaluer_joueur($id_match, $id_joueur, $note, $commentaire) {
         return ParticipationDAO::evaluer_joueur($id_match, $id_joueur, $note, $commentaire);
