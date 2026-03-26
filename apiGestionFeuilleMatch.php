@@ -122,11 +122,7 @@ switch ($methode) {
                 deliver_response(403, "Impossible de modifier la participation d'un match passé.");
                 exit;
             }
-            // Ici on pourrait implémenter une modif unitaire, mais le POST fait déjà le gros du travail.
-            // Pour rester simple, on peut dire que PUT sans évaluation fait une modif unitaire si nécessaire.
-            // Mais le README dit "Modifier la participation" via un formulaire global probablement.
-            // On laisse l'évaluation ici car c'est explicitement demandé dans "Évaluer les joueurs".
-        }
+        } 
         break;
 
     case 'DELETE':
