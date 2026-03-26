@@ -2,29 +2,29 @@
 require_once __DIR__ . '/../DAO/ParticipationDAO.php';
 
 class Participation {
-	private $id_joueurs;
-	private $id_matchs;
-	private $feuille_match;
-	private $evaluation;
-	private $nom_poste;
-	private $est_capitaine;
-	private $commentaire;
+	public $Id_Joueurs;
+	public $Id_Matchs;
+	public $feuille_match;
+	public $evaluation;
+	public $nom_poste;
+	public $est_Capitaine;
+	public $commentaire;
 
 
-    public function get_id_joueurs() {              return $this->id_joueurs; }
-    public function get_id_matchs() {               return $this->id_matchs; }
+    public function get_id_joueurs() {              return $this->Id_Joueurs; }
+    public function get_id_matchs() {               return $this->Id_Matchs; }
     public function get_feuille_match() {           return $this->feuille_match; }
     public function get_evaluation() {              return $this->evaluation; }
     public function get_nom_poste() {               return $this->nom_poste; }
-    public function get_est_capitaine() {           return $this->est_capitaine; }
+    public function get_est_capitaine() {           return $this->est_Capitaine; }
     public function get_commentaire() {             return $this->commentaire; }
 
-    public function set_id_joueurs($id) {           $this->id_joueurs = $id; }
-    public function set_id_matchs($id) {            $this->id_matchs = $id; }
+    public function set_id_joueurs($id) {           $this->Id_Joueurs = $id; }
+    public function set_id_matchs($id) {            $this->Id_Matchs = $id; }
     public function set_feuille_match($role) {      $this->feuille_match = $role; }
     public function set_evaluation($note) {         $this->evaluation = $note; }
     public function set_nom_poste($poste) {         $this->nom_poste = $poste; }
-    public function set_est_capitaine($est_cap) {   $this->est_capitaine = $est_cap; }
+    public function set_est_capitaine($est_cap) {   $this->est_Capitaine = $est_cap; }
     public function set_commentaire($comm) {        $this->commentaire = $comm; }
 
     	// Vérifier si le joueur est titulaire pour ce match

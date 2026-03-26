@@ -1,6 +1,7 @@
 <?php
 require_once 'Modeles/DAO/MatchDAO.php';
 require_once 'Modeles/DAO/ParticipationDAO.php';
+require_once 'Modeles/DAO/JoueurDAO.php';
 require_once 'Modeles/connexionDB.php';
 require_once 'apiGestion.php';
 
@@ -26,19 +27,19 @@ switch ($methode) {
                 $globales = MatchDAO::obtenir_stats_globales();
                 $joueurs = ParticipationDAO::obtenir_stats_joueurs();
                 
-                // Calcul additionnel pour le pourcentage total des matchs perdus/nuls
-                $matchs_joues = $globales['victoires'] + $globales['defaites'] + $globales['nuls'];
-                if ($matchs_joues > 0) {
-                    $globales['pourcentage_defaites'] = round(($globales['defaites'] / $matchs_joues) * 100, 1);
-                    $globales['pourcentage_nuls'] = round(($globales['nuls'] / $matchs_joues) * 100, 1);
-                } else {
-                    $globales['pourcentage_defaites'] = 0;
-                    $globales['pourcentage_nuls'] = 0;
-                }
+                // On ajoute le prochain match et le dernier résultat directement depuis le DAO
+                $prochain = MatchDAO::obtenir_prochain_match();
+                $dernier = MatchDAO::obtenir_dernier_resultat();
+
+                // On ajoute les stats de joueurs pour le tableau de bord
+                $globales['nb_joueurs_actifs'] = JoueurDAO::compter_joueurs_actifs();
+                $globales['age_moyen'] = JoueurDAO::calculer_age_moyen();
 
                 deliver_response(200, "Statistiques récupérées", [
                     'globales' => $globales,
-                    'par_joueur' => $joueurs
+                    'par_joueur' => $joueurs,
+                    'prochain_match' => $prochain,
+                    'dernier_resultat' => $dernier
                 ]);
             }
         } catch (Exception $erreur) {

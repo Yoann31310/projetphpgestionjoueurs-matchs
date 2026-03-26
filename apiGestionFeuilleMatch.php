@@ -52,8 +52,8 @@ switch ($methode) {
             }
 
             $joueur = Joueur::trouver_par_id($p['id_joueur']);
-            if (!$joueur || $joueur->get_statut() !== 'Actif') {
-                deliver_response(400, "Le joueur ID {$p['id_joueur']} n'est pas actif ou n'existe pas.");
+            if (!$joueur || $joueur->get_statut() === 'Supprimé') {
+                deliver_response(400, "Le joueur ID {$p['id_joueur']} n'est pas autorisé ou n'existe pas.");
                 exit;
             }
 
