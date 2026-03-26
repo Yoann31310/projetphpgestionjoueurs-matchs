@@ -10,7 +10,6 @@ if (isset($_GET['id'])) {
     $identifiant_match = $_GET['id'];
 }
 
-// Aiguillage du traitement en fonction de la méthode HTTP
 switch ($methode) {
     case 'GET':
         try {
@@ -45,6 +44,12 @@ switch ($methode) {
                 exit;
             }
 
+            // On vérifie que la date du match n'est pas dans le passé
+            if (strtotime($data['date_heure']) < time()) {
+                deliver_response(400, "La date du match ne peut pas être dans le passé.");
+                exit;
+            }
+
             $nouveau_match = new Matchs();
             $nouveau_match->set_date_heure($data['date_heure']);
             $nouveau_match->set_nom_equipe_adverse($data['nom_equipe_adverse']);
@@ -71,21 +76,87 @@ switch ($methode) {
                 exit;
             }
 
-            if (!isset($data['date_heure']) || !isset($data['nom_equipe_adverse']) || !isset($data['lieu']) || !isset($data['adresse'])) {
-                deliver_response(400, "Données incomplètes.");
+            $match_actuel = Matchs::trouver_par_id($identifiant_match);
+            if (!$match_actuel) {
+                deliver_response(404, "Match introuvable");
                 exit;
             }
 
+            // Si le match est déjà passé, on n'autorise que la saisie du résultat 
+            // (ou modif du résultat actuel)
+            if ($match_actuel->est_passe()) {
+                // On regarde si on essaye de modifier autre chose que le résultat
+                if (isset($data['date_heure']) || isset($data['nom_equipe_adverse']) || isset($data['lieu']) || isset($data['adresse'])) {
+                    // Si les données envoyées sont identiques aux actuelles, pas la peine de renvoyer d'erreur
+                    if (isset($data['date_heure'])) { 
+                        $date_h = $data['date_heure']; 
+                    } else {
+                         $date_h = $match_actuel->get_date_heure(); 
+                    }
+ 
+                    if (isset($data['nom_equipe_adverse'])) { 
+                        $nom_eq = $data['nom_equipe_adverse']; 
+                    } else {
+                         $nom_eq = $match_actuel->get_nom_equipe_adverse(); 
+                    }
+ 
+                    if (isset($data['lieu'])) { 
+                        $lieu_m = $data['lieu']; 
+                    } else {
+                         $lieu_m = $match_actuel->get_lieu(); 
+                    }
+
+                    if ($date_h != $match_actuel->get_date_heure() ||
+                        $nom_eq != $match_actuel->get_nom_equipe_adverse() ||
+                        $lieu_m != $match_actuel->get_lieu()) {
+                        
+                        deliver_response(403, "Impossible de modifier les informations (date, lieu, adverse) d'un match déjà passé. Seul le résultat peut être saisi.");
+                        exit;
+                    }
+                }
+            }
+
+            // Si le match est à venir et qu'on change la date
+            if (!$match_actuel->est_passe() && isset($data['date_heure'])) {
+                if (strtotime($data['date_heure']) < time()) {
+                    deliver_response(400, "La nouvelle date du match ne peut pas être dans le passé.");
+                    exit;
+                }
+            }
+
             $match_a_modifier = new Matchs();
-            $match_a_modifier->set_date_heure($data['date_heure']);
-            $match_a_modifier->set_nom_equipe_adverse($data['nom_equipe_adverse']);
-            $match_a_modifier->set_lieu($data['lieu']);
-            $match_a_modifier->set_adresse($data['adresse']);
+            if (isset($data['date_heure'])) {
+                $match_a_modifier->set_date_heure($data['date_heure']);
+            } else {
+                $match_a_modifier->set_date_heure($match_actuel->get_date_heure());
+            }
+
+            if (isset($data['nom_equipe_adverse'])) {
+                $match_a_modifier->set_nom_equipe_adverse($data['nom_equipe_adverse']);
+            } else {
+                $match_a_modifier->set_nom_equipe_adverse($match_actuel->get_nom_equipe_adverse());
+            }
+
+            if (isset($data['lieu'])) {
+                $match_a_modifier->set_lieu($data['lieu']);
+            } else {
+                $match_a_modifier->set_lieu($match_actuel->get_lieu());
+            }
+
+            if (isset($data['adresse'])) {
+                $match_a_modifier->set_adresse($data['adresse']);
+            } else {
+                $match_a_modifier->set_adresse($match_actuel->get_adresse());
+            }
             
             if (isset($data['resultat'])) {
-                $match_a_modifier->set_resultat($data['resultat'] === "" ? null : $data['resultat']);
+                if ($data['resultat'] === "") {
+                    $match_a_modifier->set_resultat(null);
+                } else {
+                    $match_a_modifier->set_resultat($data['resultat']);
+                }
             } else {
-                $match_a_modifier->set_resultat(null);
+                $match_a_modifier->set_resultat($match_actuel->get_resultat());
             }
 
             if (Matchs::modifier($identifiant_match, $match_a_modifier)) {
@@ -105,6 +176,18 @@ switch ($methode) {
         try {
             if ($identifiant_match === null) {
                 deliver_response(400, "Identifiant du match manquant.");
+                exit;
+            }
+
+            $match_actuel = Matchs::trouver_par_id($identifiant_match);
+            if (!$match_actuel) {
+                deliver_response(404, "Match introuvable");
+                exit;
+            }
+
+            // On peut pas supprimer les matchs qui ont déjà eu lieu
+            if ($match_actuel->est_passe()) {
+                deliver_response(403, "Impossible de supprimer un match déjà passé.");
                 exit;
             }
 
