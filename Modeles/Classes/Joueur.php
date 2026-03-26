@@ -83,4 +83,12 @@ class Joueur {
 
 	// Supprimer un joueur (soft delete : changement de statut)
 	public static function supprimer($id) {         		return JoueurDAO::supprimer($id);}
+
+	// Vérifier si un joueur a déjà participé
+	public static function a_participe($id) {				return JoueurDAO::a_participe($id);}
+
+	// Ajouter un commentaire sur un joueur
+	public static function ajouter_commentaire($id_joueur, $commentaire) {
+		return JoueurDAO::ajouter_commentaire($id_joueur, $commentaire);
+	}
 }

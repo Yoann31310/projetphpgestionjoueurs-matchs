@@ -30,9 +30,38 @@ switch($methode) {
 
 
     case 'POST':
+        // Si un ID est fourni, c'est pour ajouter un commentaire
+        if ($id) {
+            if (!isset($data['commentaire']) || empty(trim($data['commentaire']))) {
+                deliver_response(400, "Le commentaire est obligatoire.");
+                exit;
+            }
+            if (Joueur::ajouter_commentaire($id, $data['commentaire'])) {
+                deliver_response(201, "Commentaire ajouté avec succès.");
+            } else {
+                deliver_response(500, "Erreur lors de l'ajout du commentaire.");
+            }
+            exit;
+        }
+
+        // Sinon, c'est pour la création d'un joueur
         // Vérification des champs qui sont obligatoires
         if (!isset($data['numero_licence']) || !isset($data['nom']) || !isset($data['prenom'])) {
             deliver_response(400, "Données incomplètes. Le nom, prénom et numéro de licence sont obligatoires.");
+            exit;
+        }
+
+        // Règles de gestion : validation des données
+        if (strlen($data['nom']) < 3 || strlen($data['prenom']) < 3) {
+            deliver_response(400, "Le nom et le prénom doivent contenir au minimum 3 caractères.");
+            exit;
+        }
+        if (isset($data['taille']) && $data['taille'] < 80) {
+            deliver_response(400, "La taille doit être d'au moins 80 cm.");
+            exit;
+        }
+        if (isset($data['poids']) && $data['poids'] < 20) {
+            deliver_response(400, "Le poids doit être d'au moins 20 kg.");
             exit;
         }
 
@@ -151,8 +180,19 @@ switch($methode) {
 
 
     case 'DELETE':
-        if(JoueurDAO::supprimer($id)) {
-            deliver_response(200, "Joueur supprimé");
+        if ($id === null) {
+            deliver_response(400, "ID du joueur manquant pour la suppression.");
+            exit;
+        }
+        
+        // Un joueur ne peut être supprimé que s'il n'a jamais participé à aucun match
+        if (Joueur::a_participe($id)) {
+            deliver_response(403, "Impossible de supprimer un joueur qui a déjà participé à au moins un match.");
+            exit;
+        }
+
+        if(Joueur::supprimer($id)) {
+            deliver_response(200, "Joueur supprimé (soft delete)");
         } else {
             deliver_response(500, "Erreur lors de la suppression");
         }

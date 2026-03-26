@@ -198,11 +198,51 @@ class JoueurDAO {
 	// Supprimer un joueur (On change son statut à 'Supprimé')
 	public static function supprimer($id) {
 		try {
+			// On vérifie d'abord si le joueur a participé à un match
+			if (self::a_participe($id)) {
+				return false;
+			}
 			$db = Database::getInstance();
 			$req = $db->prepare("UPDATE Joueurs SET statut = 'Supprimé' WHERE Id_Joueurs = :id");
 			return $req->execute(['id' => $id]);
 		} catch (PDOException $e) {
 			die("Erreur lors de la suppression du joueur : " . $e->getMessage());
+		}
+	}
+
+	// Vérifier si un joueur a déjà été sur une feuille de match
+	public static function a_participe($id) {
+		try {
+			$db = Database::getInstance();
+			$req = $db->prepare("SELECT COUNT(*) as nb FROM Participer WHERE Id_Joueurs = :id");
+			$req->execute(['id' => $id]);
+			$res = $req->fetch();
+			return $res['nb'] > 0;
+		} catch (PDOException $e) {
+			die("Erreur lors de la vérification de participation : " . $e->getMessage());
+		}
+	}
+
+	// Ajouter un commentaire général sur un joueur
+	public static function ajouter_commentaire($id_joueur, $commentaire) {
+		try {
+			$db = Database::getInstance();
+			$db->beginTransaction();
+
+			// 1. Insérer le commentaire
+			$req1 = $db->prepare("INSERT INTO Evaluation_joueur (commentaire, date_commentaire) VALUES (:comm, CURDATE())");
+			$req1->execute(['comm' => $commentaire]);
+			$id_eval = $db->lastInsertId();
+
+			// 2. Lier au joueur
+			$req2 = $db->prepare("INSERT INTO Evaluer (Id_Joueurs, Id_Evaluation_joueur) VALUES (:idJ, :idE)");
+			$req2->execute(['idJ' => $id_joueur, 'idE' => $id_eval]);
+
+			$db->commit();
+			return true;
+		} catch (PDOException $e) {
+			$db->rollBack();
+			die("Erreur lors de l'ajout du commentaire : " . $e->getMessage());
 		}
 	}
 
