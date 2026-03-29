@@ -6,9 +6,18 @@ require_once 'Modeles/Classes/Joueur.php';
 require_once 'Modeles/connexionDB.php';
 require_once 'apiGestion.php';
 
-// On récupère les identifiants si présents
-if (isset($_GET['id_match'])) { $id_match = $_GET['id_match']; } else { $id_match = null; }
-if (isset($_GET['id_joueur'])) { $id_joueur = $_GET['id_joueur']; } else { $id_joueur = null; }
+// on récupère les identifiants si présents
+if (isset($_GET['id_match'])) {
+    $id_match = $_GET['id_match'];
+} else {
+    $id_match = null;
+}
+
+if (isset($_GET['id_joueur'])) {
+    $id_joueur = $_GET['id_joueur'];
+} else {
+    $id_joueur = null;
+}
 
 switch ($methode) {
     case 'GET':
@@ -17,11 +26,15 @@ switch ($methode) {
             exit;
         }
         $participants = Participation::recuperer_participants($id_match);
+        if ($participants === null) {
+            deliver_response(500, "Erreur lors de la récupération des participants.");
+            exit;
+        }
         deliver_response(200, "Participants récupérés", $participants);
         break;
 
     case 'POST':
-        // Enregistrement complet de la feuille de match
+        // enregistrement complet de la feuille de match
         if (!isset($data['id_match']) || !isset($data['participants'])) {
             deliver_response(400, "Données incomplètes (id_match et participants requis).");
             exit;
@@ -34,7 +47,7 @@ switch ($methode) {
             exit;
         }
 
-        // Règle : Empêcher la modification d'une feuille de match une fois le match joué
+        // règle : empêcher la modification d'une feuille de match une fois le match joué
         if ($match->est_passe()) {
             deliver_response(403, "Impossible de modifier la feuille d'un match déjà passé.");
             exit;
@@ -44,7 +57,7 @@ switch ($methode) {
         $nb_titulaires = 0;
         $nb_remplacants = 0;
 
-        // Validation des participants
+        // validation des participants
         foreach ($participants as $p) {
             if (!isset($p['id_joueur']) || !isset($p['role']) || !isset($p['poste'])) {
                 deliver_response(400, "Données de participation incorrectes.");
@@ -52,14 +65,25 @@ switch ($methode) {
             }
 
             $joueur = Joueur::trouver_par_id($p['id_joueur']);
-            if (!$joueur || $joueur->get_statut() === 'Supprimé') {
-                deliver_response(400, "Le joueur ID {$p['id_joueur']} n'est pas autorisé ou n'existe pas.");
+            
+            // Vérifier que le joueur existe
+            if (!$joueur) {
+                deliver_response(400, "Le joueur ID {$p['id_joueur']} n'existe pas.");
+                exit;
+            }
+            
+            // Vérifier que le joueur est actif (seuls les joueurs Actif peuvent être sélectionnés)
+            if ($joueur->get_statut() !== 'Actif') {
+                deliver_response(400, "Le joueur ID {$p['id_joueur']} n'est pas actif (statut: {$joueur->get_statut()}).");
                 exit;
             }
 
             $role_lower = mb_strtolower($p['role'], 'UTF-8');
-            if ($role_lower === 'titulaire') $nb_titulaires++;
-            else if ($role_lower === 'remplaçant') $nb_remplacants++;
+            if ($role_lower === 'titulaire') {
+                $nb_titulaires++;
+            } else if ($role_lower === 'remplaçant') {
+                $nb_remplacants++;
+            }
         }
 
         // Règle : Nombre de titulaires entre 5 et 7
@@ -74,7 +98,7 @@ switch ($methode) {
             exit;
         }
 
-        // Tout est OK, on enregistre
+        // tout est OK, on enregistre
         Participation::vider_feuille($id_m);
         foreach ($participants as $p) {
             Participation::ajouter_participant($id_m, $p['id_joueur'], $p['role'], $p['poste']);
@@ -84,7 +108,9 @@ switch ($methode) {
         break;
 
     case 'PUT':
-        // Évaluation d'un joueur après le match
+        // 1. évaluation d'un joueur après le match (evaluation + commentaire)
+        // 2. modification du rôle/poste d'un joueur avant le match
+
         if (!$id_match || !$id_joueur) {
             deliver_response(400, "ID match et ID joueur manquants.");
             exit;
@@ -96,8 +122,14 @@ switch ($methode) {
             exit;
         }
 
-        // Si on a les champs d'évaluation, c'est une évaluation
+        // Évaluation d'un joueur (après le match)
         if (isset($data['evaluation']) || isset($data['commentaire'])) {
+            // Vérifier que le match est passé pour pouvoir évaluer
+            if (!$match->est_passe()) {
+                deliver_response(403, "Impossible d'évaluer un joueur avant que le match soit joué.");
+                exit;
+            }
+            
             if (isset($data['evaluation'])) {
                 $note = $data['evaluation'];
             } else {
@@ -115,14 +147,55 @@ switch ($methode) {
             } else {
                 deliver_response(500, "Erreur lors de l'évaluation.");
             }
-        } 
-        // Sinon, c'est peut-être une modification de participation (rôle/poste) avant le match
-        else if (isset($data['role']) && isset($data['poste'])) {
-             if ($match->est_passe()) {
+            exit;
+        }
+        
+        // Modification de participation (rôle/poste) avant le match
+        if (isset($data['role']) || isset($data['poste'])) {
+            // Vérifier que le match n'est pas passé
+            if ($match->est_passe()) {
                 deliver_response(403, "Impossible de modifier la participation d'un match passé.");
                 exit;
             }
-        } 
+            
+            // Récupérer les valeurs actuelles si non fournies
+            $participants = Participation::recuperer_participants($id_match);
+            $participation_actuelle = null;
+            
+            foreach ($participants as $p) {
+                if ($p['Id_Joueurs'] == $id_joueur) {
+                    $participation_actuelle = $p;
+                    break;
+                }
+            }
+            
+            if (!$participation_actuelle) {
+                deliver_response(404, "Le joueur n'est pas sur la feuille de match.");
+                exit;
+            }
+            
+            if (isset($data['role'])) {
+                $role = $data['role'];
+            } else {
+                $role = $participation_actuelle['feuille_match'];
+            }
+            
+            if (isset($data['poste'])) {
+                $poste = $data['poste'];
+            } else {
+                $poste = $participation_actuelle['nom_poste'];
+            }
+            
+            if (ParticipationDAO::modifier_participant($id_match, $id_joueur, $role, $poste)) {
+                deliver_response(200, "Participation modifiée avec succès.");
+            } else {
+                deliver_response(500, "Erreur lors de la modification de la participation.");
+            }
+            exit;
+        }
+        
+
+        deliver_response(400, "Données incomplètes. Fournir evaluation/commentaire ou role/poste.");
         break;
 
     case 'DELETE':

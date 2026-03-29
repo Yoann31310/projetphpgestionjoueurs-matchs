@@ -3,12 +3,12 @@
 define('URL_API_AUTH', 'https://alfred.alwaysdata.net/authapi.php');
 require_once 'Modeles/connexionDB.php';
 
-// Envoyer une réponse JSON au client
+// envoyer une réponse JSON au client
 function deliver_response($code_statut, $message_statut, $donnees = null)
 {
     http_response_code($code_statut);
 
-    // Configuration des headers CORS et Type de contenu
+    // configuration des headers CORS et Type de contenu
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -22,7 +22,13 @@ function deliver_response($code_statut, $message_statut, $donnees = null)
 
     $json_response = json_encode($reponse);
     if ($json_response === false) {
-        die('json encode ERROR : ' . json_last_error_msg());
+        http_response_code(500);
+        echo json_encode([
+            'status_code' => 500,
+            'status_message' => 'Erreur interne lors de l\'encodage JSON',
+            'data' => null
+        ]);
+        exit;
     }
 
     echo $json_response;
@@ -32,10 +38,14 @@ function deliver_response($code_statut, $message_statut, $donnees = null)
 function recuperer_jeton() {
     $headers = '';
 
-    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {        $headers = $_SERVER['HTTP_AUTHORIZATION'];  }
-    if (isset($_SERVER['Authorization'])) {             $headers = $_SERVER['Authorization'];       }
+    if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+        $headers = $_SERVER['HTTP_AUTHORIZATION'];
+    }
+    if (isset($_SERVER['Authorization'])) {
+        $headers = $_SERVER['Authorization'];
+    }
 
-    // On cherche la présence de "Bearer <le_jeton>" dans le header trouvé
+    // on cherche la présence de "Bearer <le_jeton>" dans le header trouvé
     if (preg_match('/Bearer\s(\S+)/', trim($headers), $correspondances)) {
         if ($correspondances[1] != 'null') {
             return $correspondances[1];
@@ -45,8 +55,6 @@ function recuperer_jeton() {
     // Si aucun jeton valide n'a été trouvé
     return null;
 }
-
-
 
 
 // Fonction pour interroger l'API distante et vérifier le jeton
@@ -79,8 +87,10 @@ function verifier_jeton_via_api($jeton) {
     curl_close($curl);
 
     // Si c'est 200, ok pour les api de gestion
-    if ($code_http === 200) {   return true; 
-    } else {                    return false; 
+    if ($code_http === 200) {
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -91,7 +101,7 @@ if ($methode == 'OPTIONS') {
     exit;
 }
 
-// On récupère le jeton du client
+// on récupère le jeton du client
 $jeton_recu = recuperer_jeton();
 
 if (!$jeton_recu) {
@@ -99,7 +109,7 @@ if (!$jeton_recu) {
     exit;
 }
 
-// On envoie le jeton à l'API d'authentification pour qu'elle vérifie
+// on envoie le jeton à l'API d'authentification pour qu'elle vérifie
 $est_valide = verifier_jeton_via_api($jeton_recu);
 
 // Si l'API d'authentification est pas ok : 
@@ -109,7 +119,7 @@ if (!$est_valide) {
 }
 
 // Variables partagées pour toutes les APIs
-$methode = $_SERVER['REQUEST_METHOD'];                              // La méthode http
-$donnees_entree = file_get_contents('php://input');                 // Les données brutes
-$data = json_decode($donnees_entree, true);                         // Le json de la requête décodé
+$methode = $_SERVER['REQUEST_METHOD'];
+$donnees_entree = file_get_contents('php://input');
+$data = json_decode($donnees_entree, true);
 ?>

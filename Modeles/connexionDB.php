@@ -1,6 +1,5 @@
 <?php
-// Pour se connecter à la base de données 
-// (Venant tout droit du repo projetPHP, sans aucune modif pour le moment)
+// Pour se connecter à la base de données
 
 class Database
 {
