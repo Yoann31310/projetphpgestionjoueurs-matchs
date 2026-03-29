@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: API de Gestion d'Équipe
+  description: |
+    API pour gérer une équipe sportive : joueurs, matchs, feuilles de match et statistiques.
+    
+    **Authentification requise** : Toutes les requêtes nécessitent un jeton JWT valide.
+    
+    Obtenez votre jeton via l'API d'authentification : `POST https://alfred.alwaysdata.net/authapi.php`
+    
+  version: 1.0.0
+
+servers:
+  - url: https://alphonse.alwaysdata.net
+    description: Serveur de production
+
+tags:
+  - name: Joueurs
+    description: Gestion des joueurs
+  - name: Matchs
+    description: Gestion des matchs
+  - name: Feuilles de match
+    description: Composition d'équipe et évaluations
+  - name: Statistiques
+    description: Statistiques de l'équipe
+
+security:
+  - bearerAuth: []
+
+paths:
+  /apiGestionJoueur.php:
+    get:
+      tags: [Joueurs]
+      summary: Lister les joueurs actifs
+      responses:
+        '200':
+          description: Liste des joueurs
+        '401':
+          description: Non authentifié
+
+    post:
+      tags: [Joueurs]
+      summary: Créer un joueur
+      description: |
+        Champs obligatoires : numero_licence, nom, prenom
+        
+        Règles :
+        - Nom et prénom : minimum 3 caractères
+        - Licence unique
+        - Taille minimum : 80 cm
+        - Poids minimum : 20 kg
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [numero_licence, nom, prenom]
+              properties:
+                numero_licence: { type: string, example: "12345678" }
+                nom: { type: string, example: "DUPONT" }
+                prenom: { type: string, example: "Jean" }
+                date_naissance: { type: string, format: date, example: "1995-06-15" }
+                taille: { type: integer, example: 180 }
+                poids: { type: integer, example: 75 }
+                statut: { type: string, enum: [Actif, Blessé, Suspendu], example: "Actif" }
+      responses:
+        '201':
+          description: Joueur créé
+        '400':
+          description: Données invalides
+        '409':
+          description: Licence ou nom/prénom déjà utilisé
+
+  /apiGestionJoueur.php?id={id}:
+    get:
+      tags: [Joueurs]
+      summary: Récupérer un joueur
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Joueur trouvé
+        '404':
+          description: Joueur non trouvé
+
+    put:
+      tags: [Joueurs]
+      summary: Modifier un joueur
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                numero_licence: { type: string }
+                nom: { type: string }
+                prenom: { type: string }
+                date_naissance: { type: string, format: date }
+                taille: { type: integer }
+                poids: { type: integer }
+                statut: { type: string }
+      responses:
+        '200':
+          description: Joueur modifié
+        '409':
+          description: Conflit
+
+    delete:
+      tags: [Joueurs]
+      summary: Supprimer un joueur
+      description: Impossible si le joueur a participé à un match.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Joueur supprimé
+        '403':
+          description: Suppression interdite
+
+    post:
+      tags: [Joueurs]
+      summary: Ajouter un commentaire
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [commentaire]
+              properties:
+                commentaire: { type: string }
+      responses:
+        '201':
+          description: Commentaire ajouté
+
+  /apiGestionMatch.php:
+    get:
+      tags: [Matchs]
+      summary: Lister les matchs
+      responses:
+        '200':
+          description: Liste des matchs
+
+    post:
+      tags: [Matchs]
+      summary: Créer un match
+      description: La date ne peut pas être dans le passé.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date_heure, nom_equipe_adverse, lieu, adresse]
+              properties:
+                date_heure: { type: string, format: date-time, example: "2025-04-15 15:00:00" }
+                nom_equipe_adverse: { type: string, example: "FC Exemple" }
+                lieu: { type: string, enum: [Domicile, Extérieur] }
+                adresse: { type: string }
+      responses:
+        '201':
+          description: Match créé
+        '400':
+          description: Données invalides
+
+  /apiGestionMatch.php?id={id}:
+    get:
+      tags: [Matchs]
+      summary: Récupérer un match
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Match trouvé
+        '404':
+          description: Match non trouvé
+
+    put:
+      tags: [Matchs]
+      summary: Modifier un match ou saisir le résultat
+      description: |
+        Match à venir : modification de la date, lieu, adversaire.
+        Match passé : saisie du résultat uniquement.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date_heure: { type: string, format: date-time }
+                nom_equipe_adverse: { type: string }
+                lieu: { type: string }
+                adresse: { type: string }
+                resultat: { type: string, enum: [Gagnée, perdue, égalité] }
+      responses:
+        '200':
+          description: Match modifié
+        '403':
+          description: Modification interdite
+
+    delete:
+      tags: [Matchs]
+      summary: Supprimer un match
+      description: Seuls les matchs à venir peuvent être supprimés.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Match supprimé
+        '403':
+          description: Suppression interdite
+
+  /apiGestionFeuilleMatch.php?id_match={id_match}:
+    get:
+      tags: [Feuilles de match]
+      summary: Récupérer la feuille de match
+      parameters:
+        - name: id_match
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Feuille de match
+
+  /apiGestionFeuilleMatch.php:
+    post:
+      tags: [Feuilles de match]
+      summary: Enregistrer une feuille de match
+      description: |
+        Règles :
+        - Match à venir uniquement
+        - Joueurs avec statut Actif uniquement
+        - 5 à 7 titulaires
+        - Maximum 7 remplaçants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id_match, participants]
+              properties:
+                id_match: { type: integer }
+                participants:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id_joueur: { type: integer }
+                      role: { type: string, enum: [titulaire, remplaçant] }
+                      poste: { type: string }
+      responses:
+        '200':
+          description: Feuille enregistrée
+        '403':
+          description: Match passé
+
+  /apiGestionFeuilleMatch.php?id_match={id_match}&id_joueur={id_joueur}:
+    put:
+      tags: [Feuilles de match]
+      summary: Modifier une participation ou évaluer
+      description: |
+        Match à venir : modifier role et poste.
+        Match passé : évaluer le joueur (note et commentaire).
+      parameters:
+        - name: id_match
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_joueur
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role: { type: string }
+                poste: { type: string }
+                evaluation: { type: integer, minimum: 1, maximum: 10 }
+                commentaire: { type: string }
+      responses:
+        '200':
+          description: Modification enregistrée
+
+    delete:
+      tags: [Feuilles de match]
+      summary: Retirer un joueur
+      parameters:
+        - name: id_match
+          in: query
+          required: true
+          schema: { type: integer }
+        - name: id_joueur
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Joueur retiré
+
+  /apiGestionStats.php:
+    get:
+      tags: [Statistiques]
+      summary: Statistiques globales
+      description: |
+        Retourne :
+        - Stats équipe : matchs, victoires, défaites, nuls, pourcentages
+        - Stats par joueur : participations, titularisations, évaluations
+        - Prochain match et dernier résultat
+      responses:
+        '200':
+          description: Statistiques
+
+  /apiGestionStats.php?id_joueur={id_joueur}:
+    get:
+      tags: [Statistiques]
+      summary: Sélections consécutives d'un joueur
+      parameters:
+        - name: id_joueur
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Nombre de sélections consécutives
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
