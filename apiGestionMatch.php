@@ -32,9 +32,15 @@ switch ($methode) {
         break;
 
     case 'POST':
-        // Vérification des champs obligatoires
-        if (!isset($data['date_heure']) || !isset($data['nom_equipe_adverse']) || !isset($data['lieu']) || !isset($data['adresse'])) {
-            deliver_response(400, "Données incomplètes.");
+        // Vérification des champs obligatoires (existence de la clé dans le JSON)
+        if (!array_key_exists('date_heure', $data) || !array_key_exists('nom_equipe_adverse', $data) || !array_key_exists('lieu', $data) || !array_key_exists('adresse', $data)) {
+            deliver_response(400, "Données incomplètes. Toutes les clés (date_heure, nom_equipe_adverse, lieu, adresse) doivent être présentes.");
+            exit;
+        }
+
+        // On vérifie que les champs critiques ne sont pas vides
+        if (empty(trim($data['date_heure'])) || empty(trim($data['nom_equipe_adverse']))) {
+            deliver_response(400, "La date_heure et le nom de l'équipe adverse ne peuvent pas être vides.");
             exit;
         }
 
