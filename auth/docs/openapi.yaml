@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: API Authentification
+  description: |
+    API d'authentification pour la gestion d'équipe sportive.
+    
+    **Fonctionnement**
+    
+    1. Connexion via `POST /authapi.php` avec identifiant et mot de passe
+    2. Récupération d'un jeton JWT valide 10 minutes
+    3. Utilisation du jeton pour les requêtes vers l'API de Gestion
+    4. Validation du jeton via `GET /authapi.php`
+    
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8001
+    description: Serveur de production
+
+tags:
+  - name: Authentification
+    description: Connexion et validation des jetons JWT
+
+paths:
+  /authapi.php:
+    post:
+      tags:
+        - Authentification
+      summary: Se connecter et obtenir un jeton JWT
+      description: |
+        Authentifie un entraîneur et retourne un jeton JWT.
+        Le jeton expire après 10 minutes.
+      operationId: connexion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifiant
+                - password
+              properties:
+                identifiant:
+                  type: string
+                  description: Numéro d'identification de l'entraîneur
+                  example: "coach"
+                password:
+                  type: string
+                  description: Mot de passe
+                  example: "monmotdepasse"
+      responses:
+        '200':
+          description: Authentification réussie
+          content:
+            application/json:
+              example:
+                status_code: 200
+                status_message: "Authentification réussie"
+                data: "eyJhbGdvIjoiSFMyNTYiLCJ0eXBlIjoiSldUIn0..."
+        '400':
+          description: Identifiant ou mot de passe manquant
+          content:
+            application/json:
+              example:
+                status_code: 400
+                status_message: "Erreur : Identifiant ou mot de passe manquant."
+                data: null
+        '401':
+          description: Identifiants incorrects
+          content:
+            application/json:
+              example:
+                status_code: 401
+                status_message: "Login ou mot de passe incorrect."
+                data: null
+        '405':
+          description: Méthode non autorisée
+          content:
+            application/json:
+              example:
+                status_code: 405
+                status_message: "Méthode non autorisée."
+                data: null
+
+    get:
+      tags:
+        - Authentification
+      summary: Valider un jeton JWT
+      description: |
+        Vérifie si un jeton JWT est valide.
+        Utilisé par l'API de Gestion pour authentifier les requêtes.
+      operationId: validerJeton
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Jeton valide
+          content:
+            application/json:
+              example:
+                status_code: 200
+                status_message: "Jeton valide"
+                data: null
+        '401':
+          description: Jeton invalide ou expiré
+          content:
+            application/json:
+              example:
+                status_code: 401
+                status_message: "Jeton invalide ou expiré"
+                data: null
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Jeton JWT obtenu via POST /authapi.php

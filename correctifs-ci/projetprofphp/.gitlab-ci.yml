@@ -1,0 +1,39 @@
+# Pipeline GitLab pour projetprofphp : vérifications simples, sans Docker-in-Docker ni construction d'image.
+#
+# Les deux erreurs vues dans la CI venaient d'« Auto DevOps » (activé quand un projet n'a pas de fichier .gitlab-ci.yml) :
+#   1. job « build » : le buildpack Heroku cherche un composer.json / composer.lock, absents d'un projet PHP sans Composer
+#      -> « ERROR: Failed to parse 'composer.lock' ».
+#   2. job « build » (image Docker) : « error during connect: lookup docker ... server misbehaving » :
+#      le serveur de l'IUT ne fournit pas le service Docker-in-Docker.
+# Les jobs « test », « code_quality », « container_scanning », « secret_detection » et « semgrep-sast » dépendaient de ce build.
+#
+# Dès qu'un fichier .gitlab-ci.yml existe, Auto DevOps n'est plus utilisé : seuls les jobs ci-dessous tournent.
+
+stages:
+  - verifier
+
+default:
+  image: php:8.2-cli
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# 1. Aucun fichier PHP ne doit contenir d'erreur de syntaxe
+syntaxe-php:
+  stage: verifier
+  script:
+    - php -v
+    - find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
+    - echo "Tous les fichiers PHP sont valides."
+
+# 2. Les fichiers indispensables au fonctionnement sont présents
+fichiers-essentiels:
+  stage: verifier
+  script:
+    - |
+      for f in index.php schema.sql README.md Psr4AutoloaderClass.php stylesheet.css; do
+        test -f "$f" || { echo "Fichier manquant : $f"; exit 1; }
+      done
+      echo "Fichiers essentiels présents."

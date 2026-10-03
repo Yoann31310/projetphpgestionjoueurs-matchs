@@ -1,0 +1,6 @@
+# Réglages privés : jamais sur Git
+.env
+*.log
+.idea/
+.vscode/
+vendor/

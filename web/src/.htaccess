@@ -1,0 +1,9 @@
+# Les fichiers internes ne doivent pas être ouverts directement dans le navigateur
+Options -Indexes
+<FilesMatch "^(config\.php|config_api\.php)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^Modeles/ - [F,L]
+</IfModule>

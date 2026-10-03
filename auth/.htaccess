@@ -1,0 +1,9 @@
+# Les fichiers internes ne doivent pas être accessibles depuis le navigateur
+Options -Indexes
+<FilesMatch "^(\.env.*|config\.php|connexionDB\.php|jwt_utils\.php|.*\.sql|.*\.md|.*\.example)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(DAO|Classes)/ - [F,L]
+</IfModule>

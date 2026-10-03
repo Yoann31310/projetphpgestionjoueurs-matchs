@@ -1,0 +1,43 @@
+# Pipeline GitLab : vérifications automatiques, sans Docker-in-Docker ni construction d'image.
+#
+# Pourquoi ce fichier ? Sans lui, GitLab lance « Auto DevOps » : il essaie de construire une image
+# (Heroku/Docker) et de lancer des analyses de sécurité qui exigent Docker, ce qui échoue sur le
+# serveur de l'IUT (« Failed to parse composer.lock », « lookup docker »). Dès qu'un fichier
+# .gitlab-ci.yml existe, Auto DevOps n'est plus utilisé : seuls les jobs ci-dessous tournent.
+
+stages:
+  - verifier
+
+default:
+  image: php:8.2-cli
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+# 1. Aucun fichier PHP ne doit contenir d'erreur de syntaxe
+syntaxe-php:
+  stage: verifier
+  script:
+    - php -v
+    - find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
+    - echo "Tous les fichiers PHP sont valides."
+
+# 2. Tests automatiques (jetons JWT, validation des données, protections de l'interface)
+tests:
+  stage: verifier
+  script:
+    - php tests/run.php
+
+# 3. Aucun mot de passe écrit en clair dans le code (ils doivent venir de l'environnement ou du fichier .env)
+pas-de-mot-de-passe-dans-le-code:
+  stage: verifier
+  script:
+    - |
+      if grep -rnE "(\\\$(mdp|password|mot_de_passe|motdepasse)|DB_PASSWORD|secret)[[:space:]]*=[[:space:]]*['\"][^'\"]+['\"]" --include='*.php' . ; then
+        echo "Un mot de passe ou un secret est écrit en clair dans le code (voir lignes ci-dessus)."
+        exit 1
+      fi
+      echo "Aucun mot de passe en clair trouvé."
+    - test ! -f auth/.env && test ! -f api/.env && test ! -f web/.env || { echo "Un fichier .env est présent dans le dépôt."; exit 1; }
