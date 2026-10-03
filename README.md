@@ -1,5 +1,7 @@
 # Gestion d'équipe de handball (projet R4.01)
 
+> **Projet étudiant** réalisé à l'IUT de Toulouse (BUT Informatique, 2e année, module R4.01 « Architecture logicielle »), en équipe. Il sert d'exercice sur les API REST, l'authentification par jeton et l'architecture en couches. Les noms, joueurs et matchs de la base fournie sont inventés.
+
 Application web pour un entraîneur : gérer ses **joueurs**, programmer ses **matchs**, composer la **feuille de match**
 (titulaires, remplaçants, postes), noter les joueurs après la rencontre et consulter des **statistiques**.
 
@@ -21,6 +23,22 @@ Le projet est découpé en trois applications indépendantes qui communiquent pa
 | [`tests/`](tests/run.php) | Tests automatiques | `php tests/run.php` |
 
 Ces trois applications étaient auparavant trois dépôts séparés (`auth_api`, `projetphpgestionjoueurs-matchs`, `projetphp`).
+
+## Captures d'écran
+
+| Tableau de bord | Joueurs |
+|---|---|
+| ![Tableau de bord](docs/images/tableau-de-bord.webp) | ![Liste des joueurs](docs/images/joueurs.webp) |
+
+| Matchs | Feuille de match |
+|---|---|
+| ![Calendrier des matchs](docs/images/matchs.webp) | ![Feuille de match](docs/images/feuille-de-match.webp) |
+
+| Statistiques | Documentation de l'API (Swagger) |
+|---|---|
+| ![Statistiques](docs/images/statistiques.webp) | ![Documentation Swagger de l'API de gestion](docs/images/documentation-api.webp) |
+
+Les captures viennent d'une exécution locale avec les données factices de `db/`.
 
 ## Installer et lancer en local
 
